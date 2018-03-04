@@ -20,7 +20,7 @@ public class BookServer {
       Matcher m1 = P1.matcher(line);
       //add book and quantity to library inventory
       while (m1.find() && m2.find()) {
-          System.out.println(m1.group(0));
+          //System.out.println(m1.group(0));
         String book = m1.group(1);
         int quantity = Integer.parseInt(m2.group(0));
         library.getInventory().put(book, quantity);
@@ -41,15 +41,21 @@ public class BookServer {
         //Handle all types of commands here
         public void run() {
             BufferedReader inFromClient = null;
+            DataOutputStream outToClient = null;
+
             try {
                 //create input stream attached to socket
                 inFromClient = new BufferedReader(new InputStreamReader(theClient.getInputStream()));
                 //create output stream, attached to socket
-                DataOutputStream outToClient = new DataOutputStream(theClient.getOutputStream());
+                outToClient = new DataOutputStream(theClient.getOutputStream());
                 //read in line from socket
-                String clientCommand = inFromClient.readLine();
-                //TODO Testing here if server is receiving commands from client
-                System.out.println(clientCommand);
+                System.out.println("handling client command");
+                while(inFromClient.read()!=-1){
+                    String clientCommand = inFromClient.readLine();
+                    //TODO Testing here if server is receiving commands from client
+                    System.out.println(clientCommand + "\n");
+                }
+
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -76,6 +82,7 @@ public class BookServer {
       ServerSocket listener = new ServerSocket(tcpPort);
       Socket server;
       while((server = listener.accept())!= null){
+          System.out.println("New Client... Creating new thread");
         Thread t = new ServerThread(server);
         t.start();
       }

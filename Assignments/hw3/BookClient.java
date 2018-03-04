@@ -1,12 +1,24 @@
-import java.io.DataOutputStream;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.Scanner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 public class BookClient {
-  public static void main (String[] args) {
+
+  public static String parseTitle(String line){
+    Pattern P1 = Pattern.compile("\"([^\"]*)\"");
+    Matcher m1 = P1.matcher(line);
+    String title = null;
+    while (m1.find()) {
+      //System.out.println(m1.group(0));
+      title = m1.group(1);
+    }
+    return title;
+  }
+
+  public static void main (String[] args) throws IOException {
     String hostAddress;
     int tcpPort;
     int udpPort;
@@ -25,17 +37,25 @@ public class BookClient {
     tcpPort = 7000;// hardcoded -- must match the server's tcp port
     udpPort = 8000;// hardcoded -- must match the server's udp port
 
+    Scanner sc = null;
+    Socket clientSocket = null;
+    DataOutputStream outToServer = null;
+    DataInputStream fromServer = null;
+    PrintStream pout = null;
 
     try {
-        Scanner sc = new Scanner(new FileReader(commandFile));
-        Socket clientSocket = new Socket("localhost",tcpPort);
+        sc = new Scanner(new FileReader(commandFile));
+        clientSocket = new Socket("localhost",tcpPort);
         //create output stream to write to socket
-        DataOutputStream outToServer = new DataOutputStream(clientSocket.getOutputStream());
+        System.out.println("connecting to server");
+        outToServer = new DataOutputStream(clientSocket.getOutputStream());
+        pout = new PrintStream(clientSocket.getOutputStream());
 
 
         while(sc.hasNextLine()) {
           String cmd = sc.nextLine();
           String[] tokens = cmd.split(" ");
+          System.out.println(cmd);
 
           if (tokens[0].equals("setmode")) {
             // Default: UDP
@@ -43,34 +63,37 @@ public class BookClient {
 
           }
           else if (tokens[0].equals("borrow")) {
-            for(String word:tokens){
-              outToServer.writeBytes(word);
-            }
-
+            System.out.println("borrowing...");
+            String title = parseTitle(cmd);
+            System.out.println(title);
+            pout.println(1 + " " + tokens[1] + " " + title + "\n");
+            pout.flush();
+            int retValue = sc.nextInt();
+            //outToServer.writeBytes(cmd);
             // TODO appropriate responses form the server
 
           } else if (tokens[0].equals("return")) {
-            outToServer.writeBytes(tokens[0]);
-            outToServer.writeBytes(tokens[1]);
+            //outToServer.writeBytes(cmd);
 
             // TODO appropriate responses form the server
 
           } else if (tokens[0].equals("inventory")) {
-            outToServer.writeBytes(tokens[0]);
+            //outToServer.writeBytes(cmd);
             // appropriate responses form the server
 
 
           } else if (tokens[0].equals("list")) {
-            outToServer.writeBytes(tokens[0]);
+            //outToServer.writeBytes(cmd);
 
             // appropriate responses form the server
 
           } else if (tokens[0].equals("exit")) {
-            outToServer.writeBytes(tokens[0]);
+            //outToServer.writeBytes(cmd);
 
           } else {
             System.out.println("ERROR: No such command");
           }
+
         }
     } catch (FileNotFoundException e) {
 	e.printStackTrace();
@@ -78,6 +101,9 @@ public class BookClient {
       e.printStackTrace();
     } catch (IOException e) {
       e.printStackTrace();
+    }finally {
+        outToServer.close();
+        clientSocket.close();
     }
   }
 }
