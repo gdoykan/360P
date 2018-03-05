@@ -5,9 +5,11 @@ import java.util.HashMap;
  */
 public class Library {
     private HashMap<String, Integer> inventory;
-    //need another data structure for students and what books they have
+    private int count;
+
 
     public Library(){
+        this.count = 0;
         this.inventory = new HashMap<>();
     }
 

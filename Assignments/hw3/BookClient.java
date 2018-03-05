@@ -18,6 +18,7 @@ public class BookClient {
     return title;
   }
 
+
   public static void main (String[] args) throws IOException {
     String hostAddress;
     int tcpPort;
@@ -38,24 +39,28 @@ public class BookClient {
     udpPort = 8000;// hardcoded -- must match the server's udp port
 
     Scanner sc = null;
+    Scanner fromServer = null;
     Socket clientSocket = null;
     DataOutputStream outToServer = null;
-    DataInputStream fromServer = null;
+    //DataInputStream fromServer = null;
     PrintStream pout = null;
+
 
     try {
         sc = new Scanner(new FileReader(commandFile));
         clientSocket = new Socket("localhost",tcpPort);
-        //create output stream to write to socket
         System.out.println("connecting to server");
-        outToServer = new DataOutputStream(clientSocket.getOutputStream());
+        //outToServer = new DataOutputStream(clientSocket.getOutputStream());
+        //create output stream to write to socket
         pout = new PrintStream(clientSocket.getOutputStream());
+        //reading from inputstream from Server
+        fromServer = new Scanner(clientSocket.getInputStream());
 
 
         while(sc.hasNextLine()) {
           String cmd = sc.nextLine();
-          String[] tokens = cmd.split(" ");
           System.out.println(cmd);
+          String[] tokens = cmd.split(" ");
 
           if (tokens[0].equals("setmode")) {
             // Default: UDP
@@ -64,12 +69,10 @@ public class BookClient {
           }
           else if (tokens[0].equals("borrow")) {
             System.out.println("borrowing...");
-            String title = parseTitle(cmd);
-            System.out.println(title);
-            pout.println(1 + " " + tokens[1] + " " + title + "\n");
+            pout.println(cmd);
             pout.flush();
-            int retValue = sc.nextInt();
-            //outToServer.writeBytes(cmd);
+            String retValue = fromServer.nextLine();
+            System.out.println(retValue);
             // TODO appropriate responses form the server
 
           } else if (tokens[0].equals("return")) {
@@ -83,7 +86,11 @@ public class BookClient {
 
 
           } else if (tokens[0].equals("list")) {
-            //outToServer.writeBytes(cmd);
+            System.out.println("Listing records....");
+            pout.println(cmd);
+            pout.flush();
+            String retValue = fromServer.nextLine();
+            System.out.println(retValue);
 
             // appropriate responses form the server
 
